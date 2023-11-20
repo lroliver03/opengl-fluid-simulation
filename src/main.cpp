@@ -2,33 +2,41 @@
 #include "glad/glad.h"
 #include <GLFW/glfw3.h>
 
-#define WWIDTH 800
-#define WHEIGHT 600
+#include <cmath>
+
+#include "parameters.h"
+#include "shader/shader.h"
+
+float vertices[] = {
+    0.f, 0.f, 0.f
+};
+
+float circle[12*3] = {0.f};
+unsigned int indices[10*3] = {
+    0, 1, 2,
+    0, 2, 3,
+    0, 3, 4,
+    0, 4, 5,
+    0, 5, 6,
+    0, 6, 7,
+    0, 7, 8,
+    0, 8, 9,
+    0, 9, 10,
+    0, 10, 11,
+};
+
+void makeCircle(float circle_center[3], float radius, float *output) {
+    float angle = 0.f;
+    const float angle_step = 2*M_PI/12.f;
+    for (int i = 0; i < 36; i += 3) {
+        output[i] = radius * std::cos(angle) + circle_center[0];
+        output[i+1] = radius * std::sin(angle) + circle_center[1];
+        angle += angle_step;
+    }
+}
 
 void windowSizeCallback(GLFWwindow* window, int width, int height);
 void framebufferSizeCallback(GLFWwindow* window, int width, int height);
-
-float vertices[] = {
-    -.5f, -.5f, 0.f,
-    .5f, -.5f, 0.f,
-    0.f, .5f, 0.f
-};
-
-unsigned int indices[] = {
-    0, 1, 2
-};
-
-const char *vertexShaderSource = "#version 330 core\n"
-    "layout (location = 0) in vec3 aPos;\n"
-    "void main() {\n"
-    "   gl_Position = vec4(aPos, 1.0);\n"
-    "}\0";
-
-const char *fragmentShaderSource = "#version 330 core\n"
-    "out vec4 FragColor;\n"
-    "void main() {\n"
-    "   FragColor = vec4(1.f, .5f, .2f, 1.f);\n"
-    "}\0";
 
 unsigned int VAO, VBO, EBO;
 
@@ -61,38 +69,15 @@ int main(int, char**) {
         return -1;
     }
 
-    unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
-    int success;
-    char info_log[512];
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(vertexShader, 512, NULL, info_log);
-        printf("ERROR::SHADER::VERTEX::COMPILATION_FAILED\n%s\n", info_log);
-    }
-
-    unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(fragmentShader, 512, NULL, info_log);
-        printf("ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n%s\n", info_log);
-    }
-
-    unsigned int shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(shaderProgram, 512, NULL, info_log);
-        printf("ERROR::SHADER::PROGRAM::LINKING_FAILED\n%s\n", info_log);
-    }
-
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
+    Shader my_shader;
+    my_shader.createProgram();
+    my_shader.loadFile(Shader::VERTEX_SHADER, "assets/shaders/vertex.vert");
+    my_shader.loadFile(Shader::FRAGMENT_SHADER, "assets/shaders/fragment.frag");
+    my_shader.attach(Shader::VERTEX_SHADER);
+    my_shader.attach(Shader::FRAGMENT_SHADER);
+    my_shader.linkProgram();
+    my_shader.deleteShader(Shader::VERTEX_SHADER);
+    my_shader.deleteShader(Shader::FRAGMENT_SHADER);
 
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
@@ -100,10 +85,10 @@ int main(int, char**) {
     glBindVertexArray(VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(circle), circle, GL_DYNAMIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_DYNAMIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
@@ -111,18 +96,29 @@ int main(int, char**) {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     glBindVertexArray(0);
-
+    
     int width, height;
     while (!glfwWindowShouldClose(window)) {
 
         glfwPollEvents();
 
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(circle), circle);
+
         glClearColor(0.f, 0.f, 0.f, 1.f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glUseProgram(shaderProgram);
+        float time = glfwGetTime();
+        float Dx = std::cos(time)/4.f;
+        float Dy = std::sin(time)/4.f;
+        vertices[0] = Dx;
+        vertices[1] = Dy;
+
+        makeCircle(vertices, .25f, circle);
+
+        my_shader.use();
         glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, 30, GL_UNSIGNED_INT, 0);
 
         glfwSwapBuffers(window);
     }
@@ -130,7 +126,7 @@ int main(int, char**) {
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
     glDeleteBuffers(1, &EBO);
-    glDeleteProgram(shaderProgram);
+    my_shader.deleteProgram();
 
     glfwTerminate();
     return 0;
