@@ -7,28 +7,19 @@
 #include "parameters.h"
 #include "shader/shader.h"
 
+const int steps = 4;
+
 float vertices[] = {
     0.f, 0.f, 0.f
 };
 
-float circle[12*3] = {0.f};
-unsigned int indices[10*3] = {
-    0, 1, 2,
-    0, 2, 3,
-    0, 3, 4,
-    0, 4, 5,
-    0, 5, 6,
-    0, 6, 7,
-    0, 7, 8,
-    0, 8, 9,
-    0, 9, 10,
-    0, 10, 11,
-};
+float circle[steps * 3];
+unsigned int indices[(steps-2) * 3] = {0};
 
-void makeCircle(float circle_center[3], float radius, float *output) {
+void makeCircle(float circle_center[3], float radius, unsigned int *indices, float *output) {
     float angle = 0.f;
-    const float angle_step = 2*M_PI/12.f;
-    for (int i = 0; i < 36; i += 3) {
+    const float angle_step = 2*M_PI/steps;
+    for (int i = 0; i < 3*steps; i += 3) {
         output[i] = radius * std::cos(angle) + circle_center[0];
         output[i+1] = radius * std::sin(angle) + circle_center[1];
         angle += angle_step;
@@ -41,6 +32,12 @@ void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 unsigned int VAO, VBO, EBO;
 
 int main(int, char**) {
+
+    for (int i = 0; i < steps - 2; i++) {
+        indices[3*i] = 0;
+        indices[3*i+1] = i+1;
+        indices[3*i+2] = i+2;
+    }
 
     if (!glfwInit()) {
         return -1;
@@ -109,16 +106,16 @@ int main(int, char**) {
         glClear(GL_COLOR_BUFFER_BIT);
 
         float time = glfwGetTime();
-        float Dx = std::cos(time)/4.f;
+        float Dx = std::sin(2*time)/8.f;
         float Dy = std::sin(time)/4.f;
         vertices[0] = Dx;
         vertices[1] = Dy;
 
-        makeCircle(vertices, .25f, circle);
+        makeCircle(vertices, .1f, indices, circle);
 
         my_shader.use();
         glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 30, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, 10*steps, GL_UNSIGNED_INT, 0);
 
         glfwSwapBuffers(window);
     }
