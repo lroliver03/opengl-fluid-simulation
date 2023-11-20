@@ -1,0 +1,11 @@
+**/*.cmake
+**/CMakeFiles
+**/CMakeCache.txt
+**/compile_commands.json
+**/Makefile
+
+**/*.exe
+**/*.o
+**/*.out
+**/*.obj
+**/*.app
