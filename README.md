@@ -2,7 +2,7 @@
 
 # OpenGL Fluid Simulation
 
-A fluid simulation using SPH in C (yes, C, not C++) and GLSL.
+A fluid simulation using SPH in C++ and GLSL.
 
 # Technicalities
 

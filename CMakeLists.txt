@@ -4,7 +4,7 @@ project(opengl_fluid_simulation VERSION 0.0.0)
 find_package(OpenGL REQUIRED)
 
 add_executable(opengl_fluid_simulation
-    "src/main.c"
+    "src/main.cpp"
     "src/glad.c"
 )
 
