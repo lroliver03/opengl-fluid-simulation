@@ -6,6 +6,7 @@ find_package(OpenGL REQUIRED)
 add_executable(opengl_fluid_simulation
     "src/main.cpp"
     "src/glad.c"
+    "src/shader.cpp"
 )
 
 include_directories(opengl_fluid_simulation ./include)
