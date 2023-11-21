@@ -8,6 +8,8 @@ add_executable(opengl_fluid_simulation
     "src/glad.c"
     "src/shader/base.cpp"
     "src/shader/shader.cpp"
+    "src/shader/compute.cpp"
+    "src/fluid/fluid.cpp"
 )
 
 include_directories(opengl_fluid_simulation ./include)
