@@ -8,6 +8,8 @@
 #include "shader/shader.h"
 #include "shader/compute.h"
 
+char wtitle[40] = "[ FPS] OpenGL Fluid Simulation";
+
 typedef struct {
     float x, y, z;
 } vec3f;
@@ -18,14 +20,16 @@ struct particle {
 };
 
 struct particle particle_set[particles] = {
-    { // All elements
-        .position = {.x = 0.f, .y = 0.f, .z = 0.f}, // All elements
-        .velocity = {.x = 0.f, .y = 0.f, .z = 0.f} // All elements
+    { // Sets all struct elements to...
+        .position = {.x = 0.f, .y = 0.f, .z = 0.f}, // Centered position
+        .velocity = {.x = 0.f, .y = 0.f, .z = 0.f} // No velocity
     }
 };
 
-void initPositions(unsigned int index) {
-    particle_set[index].position.x = (index * .6f/(particles-1)) - .3f;
+void initPositions() { // Distributes positions along line on y = 0.
+    if (particles - 1)
+        for (int index = 0; index < particles; index++) 
+            particle_set[index].position.x = (index * .6f/(particles-1)) - .3f;
 }
 
 void windowSizeCallback(GLFWwindow* window, int width, int height);
@@ -35,7 +39,7 @@ unsigned int VAO, VBO, EBO;
 
 int main(int, char**) {
 
-    if (particles - 1) for (int i = 0; i < particles; i++) initPositions(i);
+    initPositions();
 
     if (!glfwInit()) {
         return -1;
@@ -96,9 +100,9 @@ int main(int, char**) {
 
     glPointSize(radius);
 
-    glfwSetTime(0.0); // glfwGetTime returns time since simulation start.
+    // glfwSetTime(0.0); // glfwGetTime returns time since simulation start.
     while (!glfwWindowShouldClose(window)) {
-        float time = glfwGetTime();
+        double time = glfwGetTime();
 
         glfwPollEvents();
 
@@ -130,12 +134,13 @@ int main(int, char**) {
         
         render_shader.use();
         glBindVertexArray(VAO);
-        // glDrawElements(GL_POINTS, particles, GL_UNSIGNED_INT, 0);
         glDrawArrays(GL_POINTS, 0, particles);
 
         glfwSwapBuffers(window);
 
-        while (glfwGetTime() - time < TIMESTEP) {}
+        while (glfwGetTime() - time < TIMESTEP); // Enforcing framerate when too fast.
+        sprintf(wtitle, "[%f] OpenGL Fluid Simulation", (1/(glfwGetTime() - time)));
+        glfwSetWindowTitle(window, wtitle); // Framerate now visible on window title!
     }
 
     glDeleteVertexArrays(1, &VAO);
@@ -148,9 +153,9 @@ int main(int, char**) {
 }
 
 void windowSizeCallback(GLFWwindow* window, int width, int height) {
-    glfwSetWindowSize(window, WWIDTH, WHEIGHT); // Fixed width and height.
+    glfwSetWindowSize(window, width, height);
 }
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
-    glViewport(0, 0, WWIDTH, WHEIGHT); // Fixed width and height.
+    glViewport(0, 0, width, height);
 }
