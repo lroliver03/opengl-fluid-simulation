@@ -14,21 +14,22 @@ Fluid::Fluid(unsigned int particle_count) {
                 .position = {
                     .x = SETTOINTERVAL(i, 20.f, 0.f, .3f, -.3f),
                     .y = SETTOINTERVAL(j, 20.f, 0.f, .3f, -.3f),
-                    .z = 0.f//SETTOINTERVAL(i, 20.f, 0.f, .3f, -.3f)
+                    .z = 0.f // SETTOINTERVAL(i, 20.f, 0.f, .3f, -.3f)
                 },
                 .velocity = {
                     .x = 0.f,
                     .y = 0.f,
                     .z = 0.f
-                },
-                .mass = 1.f,
-                .radius = .02f
+                }
             };
         }
     }
+}
 
-    compute.loadFile("assets/shaders/compute.comp");
-    compute.createProgram();
-    compute.attach();
-    compute.linkProgram();
+Fluid::~Fluid() {
+    delete particles;
+}
+
+void Fluid::attachRender(Shader &render) {
+    this->render = render;
 }

@@ -1,5 +1,4 @@
-#ifndef SHADER_H
-#define SHADER_H
+#pragma once
 
 #include "glad/glad.h"
 #include "base.h"
@@ -28,5 +27,3 @@ class Shader : public BaseShader {
         void detach(ShaderType shader);
         void deleteShader(ShaderType shader) const;
 };
-
-#endif

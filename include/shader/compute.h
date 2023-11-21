@@ -1,5 +1,4 @@
-#ifndef COMPUTE_H
-#define COMPUTE_H
+#pragma once
 
 #include "glad/glad.h"
 #include "base.h"
@@ -25,5 +24,3 @@ class ComputeShader : public BaseShader {
         void dispatch(unsigned int groups_x, unsigned int groups_y, unsigned int groups_z) const;
         void setMemoryBarrier(GLbitfield barrier);
 };
-
-#endif

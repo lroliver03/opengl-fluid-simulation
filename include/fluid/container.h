@@ -1,5 +1,4 @@
-#ifndef CONTAINER_H
-#define CONTAINER_H
+#pragma once
 
 #include "../parameters.h"
 #include "../utils/macros.h"
@@ -16,5 +15,3 @@ struct container_t {
     float left;
     float right;
 };
-
-#endif
