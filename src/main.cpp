@@ -5,6 +5,7 @@
 #include <cmath>
 
 #include "parameters.h"
+#include "shader/buffer.h"
 #include "shader/shader.h"
 #include "shader/compute.h"
 
@@ -35,7 +36,7 @@ void initPositions() { // Distributes positions along line on y = 0.
 void windowSizeCallback(GLFWwindow* window, int width, int height);
 void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 
-unsigned int VAO, VBO, EBO;
+shaderbuffer_t buffers;
 
 int main(int, char**) {
 
@@ -78,12 +79,12 @@ int main(int, char**) {
     render_shader.deleteShader(Shader::VERTEX_SHADER);
     render_shader.deleteShader(Shader::FRAGMENT_SHADER);
 
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
+    glGenVertexArrays(1, &buffers.VAO);
+    glGenBuffers(1, &buffers.VBO);
     // glGenBuffers(1, &EBO);
-    glBindVertexArray(VAO);
+    glBindVertexArray(buffers.VAO);
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, buffers.VBO);
     glBufferData(GL_ARRAY_BUFFER, particles * sizeof(particle), particle_set, GL_DYNAMIC_DRAW);
 
     // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
@@ -129,11 +130,11 @@ int main(int, char**) {
             }
         }
 
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBindBuffer(GL_ARRAY_BUFFER, buffers.VBO);
         glBufferSubData(GL_ARRAY_BUFFER, 0, 6 * particles * sizeof(float), particle_set);
         
         render_shader.use();
-        glBindVertexArray(VAO);
+        glBindVertexArray(buffers.VAO);
         glDrawArrays(GL_POINTS, 0, particles);
 
         glfwSwapBuffers(window);
@@ -143,9 +144,9 @@ int main(int, char**) {
         glfwSetWindowTitle(window, wtitle); // Framerate now visible on window title!
     }
 
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
-    glDeleteBuffers(1, &EBO);
+    glDeleteVertexArrays(1, &buffers.VAO);
+    glDeleteBuffers(1, &buffers.VBO);
+    glDeleteBuffers(1, &buffers.EBO);
     render_shader.deleteProgram();
 
     glfwTerminate();
