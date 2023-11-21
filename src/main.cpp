@@ -70,8 +70,8 @@ int main(int, char**) {
 
     Shader render_shader;
     render_shader.createProgram();
-    render_shader.loadFile(Shader::VERTEX_SHADER, "assets/shaders/vertex.vert");
-    render_shader.loadFile(Shader::FRAGMENT_SHADER, "assets/shaders/fragment.frag");
+    render_shader.loadFile(Shader::VERTEX_SHADER, "assets/shaders/particle/vertex.vert");
+    render_shader.loadFile(Shader::FRAGMENT_SHADER, "assets/shaders/particle/fragment.frag");
     render_shader.attach(Shader::VERTEX_SHADER);
     render_shader.attach(Shader::FRAGMENT_SHADER);
     render_shader.linkProgram();
