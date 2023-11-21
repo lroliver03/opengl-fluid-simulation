@@ -6,10 +6,14 @@
 
 #include "parameters.h"
 #include "shader/shader.h"
+#include "shader/compute.h"
 
-const int steps = 4;
+const int steps = 16;
 
 float vertices[] = {
+    0.f, 0.f, 0.f
+};
+float velocity[] = {
     0.f, 0.f, 0.f
 };
 
@@ -42,7 +46,7 @@ int main(int, char**) {
     if (!glfwInit()) {
         return -1;
     }
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
@@ -66,15 +70,15 @@ int main(int, char**) {
         return -1;
     }
 
-    Shader my_shader;
-    my_shader.createProgram();
-    my_shader.loadFile(Shader::VERTEX_SHADER, "assets/shaders/vertex.vert");
-    my_shader.loadFile(Shader::FRAGMENT_SHADER, "assets/shaders/fragment.frag");
-    my_shader.attach(Shader::VERTEX_SHADER);
-    my_shader.attach(Shader::FRAGMENT_SHADER);
-    my_shader.linkProgram();
-    my_shader.deleteShader(Shader::VERTEX_SHADER);
-    my_shader.deleteShader(Shader::FRAGMENT_SHADER);
+    Shader render_shader;
+    render_shader.createProgram();
+    render_shader.loadFile(Shader::VERTEX_SHADER, "assets/shaders/vertex.vert");
+    render_shader.loadFile(Shader::FRAGMENT_SHADER, "assets/shaders/fragment.frag");
+    render_shader.attach(Shader::VERTEX_SHADER);
+    render_shader.attach(Shader::FRAGMENT_SHADER);
+    render_shader.linkProgram();
+    render_shader.deleteShader(Shader::VERTEX_SHADER);
+    render_shader.deleteShader(Shader::FRAGMENT_SHADER);
 
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
@@ -105,15 +109,18 @@ int main(int, char**) {
         glClearColor(0.f, 0.f, 0.f, 1.f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        float time = glfwGetTime();
-        float Dx = std::sin(2*time)/8.f;
-        float Dy = std::sin(time)/4.f;
-        vertices[0] = Dx;
-        vertices[1] = Dy;
+        velocity[1] -= 0.0001f;
 
-        makeCircle(vertices, .1f, indices, circle);
+        for (int i = 0; i < 3; i++) vertices[i] += velocity[i];
 
-        my_shader.use();
+        if (vertices[1] <= -.95f) {
+            vertices[1] = -.95f;
+            velocity[1] *= -1.f;
+        }
+
+        makeCircle(vertices, .05f, indices, circle);
+
+        render_shader.use();
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 10*steps, GL_UNSIGNED_INT, 0);
 
@@ -123,7 +130,7 @@ int main(int, char**) {
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
     glDeleteBuffers(1, &EBO);
-    my_shader.deleteProgram();
+    render_shader.deleteProgram();
 
     glfwTerminate();
     return 0;
