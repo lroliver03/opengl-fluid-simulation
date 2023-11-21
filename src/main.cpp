@@ -8,26 +8,24 @@
 #include "shader/shader.h"
 #include "shader/compute.h"
 
-const int steps = 16;
+typedef struct {
+    float x, y, z;
+} vec3f;
 
-float vertices[] = {
-    0.f, 0.f, 0.f
+struct particle {
+    vec3f position;
+    vec3f velocity;
 };
-float velocity[] = {
-    0.f, 0.f, 0.f
-};
 
-float circle[steps * 3];
-unsigned int indices[(steps-2) * 3] = {0};
-
-void makeCircle(float circle_center[3], float radius, unsigned int *indices, float *output) {
-    float angle = 0.f;
-    const float angle_step = 2*M_PI/steps;
-    for (int i = 0; i < 3*steps; i += 3) {
-        output[i] = radius * std::cos(angle) + circle_center[0];
-        output[i+1] = radius * std::sin(angle) + circle_center[1];
-        angle += angle_step;
+struct particle particle_set[particles] = {
+    { // All elements
+        .position = {.x = 0.f, .y = 0.f, .z = 0.f}, // All elements
+        .velocity = {.x = 0.f, .y = 0.f, .z = 0.f} // All elements
     }
+};
+
+void initPositions(unsigned int index) {
+    particle_set[index].position.x = (index * .6f/(particles-1)) - .3f;
 }
 
 void windowSizeCallback(GLFWwindow* window, int width, int height);
@@ -37,11 +35,7 @@ unsigned int VAO, VBO, EBO;
 
 int main(int, char**) {
 
-    for (int i = 0; i < steps - 2; i++) {
-        indices[3*i] = 0;
-        indices[3*i+1] = i+1;
-        indices[3*i+2] = i+2;
-    }
+    if (particles - 1) for (int i = 0; i < particles; i++) initPositions(i);
 
     if (!glfwInit()) {
         return -1;
@@ -82,49 +76,66 @@ int main(int, char**) {
 
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
+    // glGenBuffers(1, &EBO);
     glBindVertexArray(VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(circle), circle, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, particles * sizeof(particle), particle_set, GL_DYNAMIC_DRAW);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_DYNAMIC_DRAW);
+    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    // glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * (steps-2) * particles * sizeof(float), indices, GL_DYNAMIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(particle), (void*)(offsetof(particle, position)));
     glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(particle), (void*)(offsetof(particle, velocity)));
+    glEnableVertexAttribArray(1);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     glBindVertexArray(0);
-    
-    int width, height;
+
+    glPointSize(radius);
+
+    glfwSetTime(0.0); // glfwGetTime returns time since simulation start.
     while (!glfwWindowShouldClose(window)) {
+        float time = glfwGetTime();
 
         glfwPollEvents();
-
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(circle), circle);
 
         glClearColor(0.f, 0.f, 0.f, 1.f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        velocity[1] -= 0.0001f;
+        // Loop over all particles.
+        for (int index = 0; index < particles; index++) {
+            // velocity[3*index + 1] -= .1f * TIMESTEP; // Gravity.
+            particle_set[index].velocity.y -= .1f * TIMESTEP; // Gravity
 
-        for (int i = 0; i < 3; i++) vertices[i] += velocity[i];
+            // for (int i = 3*index; i < 3*(index + 1); i++) positions[i] += velocity[i] * TIMESTEP; // Update positions
+            particle_set[index].position.x += particle_set[index].velocity.x * TIMESTEP;
+            particle_set[index].position.y += particle_set[index].velocity.y * TIMESTEP;
+            particle_set[index].position.z += particle_set[index].velocity.z * TIMESTEP;
 
-        if (vertices[1] <= -.95f) {
-            vertices[1] = -.95f;
-            velocity[1] *= -1.f;
+            // if (positions[3*index + 1] <= -.95f) { // Handle ground collision.
+            //     positions[3*index + 1] = -.95f;
+            //     velocity[3*index + 1] *= -1.f;
+            // }
+            if (particle_set[index].position.y <= -.95f) {
+                particle_set[index].position.y = -.95f;
+                particle_set[index].velocity.y *= -1.f;
+            }
         }
 
-        makeCircle(vertices, .05f, indices, circle);
-
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, 6 * particles * sizeof(float), particle_set);
+        
         render_shader.use();
         glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 10*steps, GL_UNSIGNED_INT, 0);
+        // glDrawElements(GL_POINTS, particles, GL_UNSIGNED_INT, 0);
+        glDrawArrays(GL_POINTS, 0, particles);
 
         glfwSwapBuffers(window);
+
+        while (glfwGetTime() - time < TIMESTEP) {}
     }
 
     glDeleteVertexArrays(1, &VAO);
