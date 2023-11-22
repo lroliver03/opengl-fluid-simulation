@@ -1,5 +1,4 @@
 #include "fluid/physics.h"
-#include <cmath>
 
 vec3f vec3f::operator+(const vec3f &v) const {
     vec3f result = {
@@ -89,6 +88,24 @@ vec3f vec3f::dir() const {
     return (*this)/this->length();
 }
 
+float dot(const vec3f &v1, const vec3f &v2) {
+    return v1.x*v2.x + v1.y*v2.y + v1.z*v2.z;
+}
+
+vec3f cross(const vec3f &v1, const vec3f &v2) {
+    vec3f result = {
+        .x = v1.y*v2.z - v2.y*v1.z,
+        .y = v1.z*v2.x - v2.x*v1.z,
+        .z = v1.x*v2.y - v2.x*v1.y
+    };
+    return result;
+}
+
+float Physics::fractionSub(const float &length, const float &radius) const {
+    if (length >= radius) return 0.f;
+    return 1 - length/radius;
+}
+
 float Physics::squaredFractionSub(const float &length, const float &radius) const {
     if (length >= radius) return 0.f;
     float value = 1 - length/radius;
@@ -115,6 +132,21 @@ float Physics::cubedFractionSubGrad(const float &length, const float &radius) co
 
 float Physics::getPressure(const float &density, const float &ideal_density, const float &multiplier) const {
     return multiplier * (density - ideal_density);
+}
+
+vec3f Physics::getRandomDirection() {
+    static std::random_device rd;
+    static std::mt19937 rng(rd());
+    static std::uniform_real_distribution<> real_dist(0.f, 1.f);
+
+    float phi = 360.f * real_dist(rng);
+    // float theta = 180.f * RANDOMF(); // Will be implemented in 3D!
+    vec3f random_dir = {
+        .x = std::cos(phi),
+        .y = std::sin(phi),
+        .z = 0.f
+    };
+    return random_dir;
 }
 
 const vec3f RIGHT = {.x =  1.f, .y =  0.f, .z =  0.f};

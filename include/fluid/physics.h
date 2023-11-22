@@ -1,5 +1,8 @@
 #pragma once
 
+#include <random>
+#include <cmath>
+
 typedef struct vec3f {
     float x, y, z;
 
@@ -18,8 +21,12 @@ typedef struct vec3f {
     vec3f dir() const;
 } vec3f;
 
+float dot(const vec3f &v1, const vec3f &v2);
+vec3f cross(const vec3f &v1, const vec3f &v2);
+
 typedef struct particle_t {
     vec3f position;
+    vec3f last_position;
     vec3f velocity;
 } particle_t;
 
@@ -31,7 +38,10 @@ class Physics {
         float NEAR_PRESSURE_MULTIPLIER;
         float IDEAL_DENSITY;
         float COLLISION_DAMPENER;
+        float VISCOSITY_LINEAR_COEF;
+        float VISCOSITY_QUADRATIC_COEF;
 
+        float fractionSub(const float &length, const float &radius) const;
         float squaredFractionSub(const float &length, const float &radius) const;
         float cubedFractionSub(const float &length, const float &radius) const;
 
@@ -39,6 +49,8 @@ class Physics {
         float cubedFractionSubGrad(const float &length, const float &radius) const;
 
         float getPressure(const float &density, const float &ideal_density, const float &multiplier) const;
+
+        vec3f getRandomDirection();
 };
 
 extern const vec3f RIGHT, LEFT, UP, DOWN, FRONT, BACK; // Unit base vectors.
