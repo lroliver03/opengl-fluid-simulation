@@ -18,5 +18,5 @@ vec3 HSV(in float h, in float s, in float value) {
 void main() {
    if (length(vec2(gl_PointCoord - vec2(0.5))) > 0.5) discard;
 
-   FragColor = vec4(HSV(clamp((length(vel))/60.0, 0.0, 0.5), 1.0, 1.0), 1.0);
+   FragColor = vec4(HSV(clamp(0.33 + length(vel)/150.0, 0.33, 1.0), 1.0, 1.0), 1.0);
 }
