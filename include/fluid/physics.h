@@ -26,7 +26,7 @@ vec3f cross(const vec3f &v1, const vec3f &v2);
 
 typedef struct particle_t {
     vec3f position;
-    vec3f last_position;
+    vec3f next_position;
     vec3f velocity;
 } particle_t;
 
