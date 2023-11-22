@@ -4,12 +4,13 @@ project(opengl_fluid_simulation VERSION 0.0.0)
 find_package(OpenGL REQUIRED)
 
 add_executable(opengl_fluid_simulation
-    "src/main.cpp"
-    "src/glad.c"
+    "src/fluid/fluid.cpp"
+    "src/fluid/physics.cpp"
     "src/shader/base.cpp"
     "src/shader/shader.cpp"
     "src/shader/compute.cpp"
-    "src/fluid/fluid.cpp"
+    "src/main.cpp"
+    "src/glad.c"
 )
 
 include_directories(opengl_fluid_simulation ./include)
