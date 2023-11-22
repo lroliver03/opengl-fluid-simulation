@@ -26,8 +26,11 @@ typedef struct particle_t {
 class Physics {
     public:
         float SMOOTHING_RADIUS;
+        float NEAR_SMOOTHING_RADIUS;
         float PRESSURE_MULTIPLIER;
+        float NEAR_PRESSURE_MULTIPLIER;
         float IDEAL_DENSITY;
+        float COLLISION_DAMPENER;
 
         float squaredFractionSub(const float &length, const float &radius) const;
         float cubedFractionSub(const float &length, const float &radius) const;
@@ -38,4 +41,5 @@ class Physics {
         float getPressure(const float &density, const float &ideal_density, const float &multiplier) const;
 };
 
+extern const vec3f RIGHT, LEFT, UP, DOWN, FRONT, BACK; // Unit base vectors.
 extern Physics Phy;

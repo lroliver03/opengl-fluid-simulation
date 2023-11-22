@@ -117,4 +117,11 @@ float Physics::getPressure(const float &density, const float &ideal_density, con
     return multiplier * (density - ideal_density);
 }
 
+const vec3f RIGHT = {.x =  1.f, .y =  0.f, .z =  0.f};
+const vec3f LEFT =  {.x = -1.f, .y =  0.f, .z =  0.f};
+const vec3f UP =    {.x =  0.f, .y =  1.f, .z =  0.f};
+const vec3f DOWN =  {.x =  0.f, .y = -1.f, .z =  0.f};
+const vec3f FRONT = {.x =  0.f, .y =  0.f, .z =  1.f};
+const vec3f BACK =  {.x =  0.f, .y =  0.f, .z = -1.f};
+
 Physics Phy;
