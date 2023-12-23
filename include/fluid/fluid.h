@@ -3,9 +3,9 @@
 #include "../parameters.h"
 #include "container.h"
 #include "physics.h"
-#include "../shader/buffer.h"
-#include "../shader/shader.h"
-#include "../shader/compute.h"
+// #include "../shader/buffer.h"
+// #include "../shader/shader.h"
+// #include "../shader/compute.h"
 
 class Fluid {
     public:
