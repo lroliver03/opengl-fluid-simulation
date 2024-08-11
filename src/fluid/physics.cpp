@@ -101,39 +101,6 @@ vec3f cross(const vec3f &v1, const vec3f &v2) {
     return result;
 }
 
-float Physics::fractionSub(const float &length, const float &radius) const {
-    if (length >= radius) return 0.f;
-    return 1 - length/radius;
-}
-
-float Physics::squaredFractionSub(const float &length, const float &radius) const {
-    if (length >= radius) return 0.f;
-    float value = 1 - length/radius;
-    return value * value;
-}
-
-float Physics::cubedFractionSub(const float &length, const float &radius) const {
-    if (length >= radius) return 0.f;
-    float value = 1 - length/radius;
-    return value * value * value;
-}
-
-float Physics::squaredFractionSubGrad(const float &length, const float &radius) const {
-    if (length >= radius) return 0.f;
-    float value = 1 - length/radius;
-    return -2.f * value/radius;
-}
-
-float Physics::cubedFractionSubGrad(const float &length, const float &radius) const {
-    if (length >= radius) return 0.f;
-    float value = 1 - length/radius;
-    return -3.f * value * value/radius;
-}
-
-float Physics::getPressure(const float &density, const float &ideal_density, const float &multiplier) const {
-    return multiplier * (density - ideal_density);
-}
-
 vec3f Physics::getRandomDirection() {
     static std::random_device rd;
     static std::mt19937 rng(rd());

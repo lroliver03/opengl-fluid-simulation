@@ -32,23 +32,6 @@ typedef struct particle_t {
 
 class Physics {
     public:
-        float SMOOTHING_RADIUS;
-        float NEAR_SMOOTHING_RADIUS;
-        float PRESSURE_MULTIPLIER;
-        float NEAR_PRESSURE_MULTIPLIER;
-        float IDEAL_DENSITY;
-        float COLLISION_DAMPENER;
-        float VISCOSITY_LINEAR_COEF;
-        float VISCOSITY_QUADRATIC_COEF;
-
-        float fractionSub(const float &length, const float &radius) const;
-        float squaredFractionSub(const float &length, const float &radius) const;
-        float cubedFractionSub(const float &length, const float &radius) const;
-
-        float squaredFractionSubGrad(const float &length, const float &radius) const;
-        float cubedFractionSubGrad(const float &length, const float &radius) const;
-
-        float getPressure(const float &density, const float &ideal_density, const float &multiplier) const;
 
         vec3f getRandomDirection();
 };

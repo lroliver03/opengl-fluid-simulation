@@ -25,9 +25,9 @@ int main(int, char**) {
     fluid.initParticles(particles);
     fluid.setBoundaries(WHEIGHT/2.f - WBORDER, WBORDER - WHEIGHT/2.f, WBORDER - WWIDTH/2.f, WWIDTH/2.f - WBORDER);
 
-    Phy.IDEAL_DENSITY = 18.f;
-    Phy.SMOOTHING_RADIUS = 100.f;
-    Phy.PRESSURE_MULTIPLIER = 10000.f;
+    // Phy.IDEAL_DENSITY = 18.f;
+    // Phy.SMOOTHING_RADIUS = 100.f;
+    // Phy.PRESSURE_MULTIPLIER = 10000.f;
 
     if (!glfwInit()) {
         return -1;
@@ -120,8 +120,8 @@ int main(int, char**) {
         glClear(GL_COLOR_BUFFER_BIT);
 
         // Loop over all particles.
-        if (!paused || stepping)
-            fluid.update(TIMESTEP, stepping || log_all);
+        // if (!paused || stepping)
+        //     fluid.update(TIMESTEP, stepping || log_all);
         
         if (stepping)
             stepping = false;
