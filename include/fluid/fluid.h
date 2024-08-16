@@ -3,36 +3,51 @@
 #include "../parameters.h"
 #include "container.h"
 #include "physics.h"
+#include <cmath>
+#include <vector>
+#include <algorithm>
+#include <iostream>
 // #include "../shader/buffer.h"
 // #include "../shader/shader.h"
 // #include "../shader/compute.h"
 
 class Fluid {
-    public:
-        unsigned int count;
-        container_t container;
-        particle_t *particles;
-        float *density;
-        float *pressure;
+  public:
+    unsigned int count;
+    container_t container;
+    particle_t *particles;
+    float *density;
+    float *pressure;
+    
+    struct grid_t {
+      std::vector<std::vector<unsigned int>> vec;
+      int width, height;
+      inline unsigned int getIndex(const unsigned &x, const unsigned &y);
+    } grid;
 
-        Fluid();
-        ~Fluid();
+    Fluid();
+    ~Fluid();
 
-        void initParticles(const unsigned int &particle_count);
-        void setBoundaries(const float &top, const float &bottom, const float &left, const float &right);
+    void init();
+    void initParticles(const unsigned int &particle_count);
+    void setBoundaries(const float &top, const float &bottom, const float &left, const float &right);
 
-        void accelerate(const unsigned int &index, const vec3f &a);
-        void accelerate(const unsigned int &index, const float &ax, const float &ay, const float &az);
-        void accelerateAll(const vec3f &a);
-        void accelerateAll(const float &ax, const float &ay, const float &az);
+    inline void accelerate(const unsigned &particle, const vec3f &dv);
 
-        void updatePositions(const float &timestep, const bool &log_values = false);
-        void updateVelocities(const float &timestep, const bool &log_values = false);
-        void updatePressures(const bool &log_values = false);
-        void updateDensities(const bool &log_values = false);
+    inline void updateAllDensities();
+    inline void updateAllPressures();
+    inline void updateAllVelocities(const float &timestep);
+    inline void handleBorderCollisions(const unsigned int &particle);
+    inline void updateAllPositions(const float &timestep);
 
-        void update(const float &timestep, const bool &log_values = false);
-        
+    void updateGrid();
+
+    inline void updateDensity(const unsigned &particle);
+    // inline void updatePressure(const unsigned &particle);
+    inline void updateVelocity(const unsigned &particle, const float &timestep);
+    inline void updatePosition(const unsigned &particle, const float &timestep);
+
+    void update(const float &timestep);
 };
 
 extern Fluid fluid;

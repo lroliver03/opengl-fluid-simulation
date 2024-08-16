@@ -7,8 +7,8 @@
 #define CHEIGHT_PX (WHEIGHT - 2*WBORDER)
 
 struct container_t {
-    float top;
-    float bottom;
-    float left;
-    float right;
+  float top;
+  float bottom;
+  float left;
+  float right;
 };
