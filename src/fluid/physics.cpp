@@ -88,7 +88,7 @@ vec3f vec3f::operator-() const {
   return result;
 }
 
-inline float vec3f::length() const {
+float vec3f::length() const {
   return std::sqrt(x*x + y*y + z*z);
 }
 
@@ -112,7 +112,7 @@ inline vec3f cross(const vec3f &v1, const vec3f &v2) {
   return result;
 }
 
-inline std::ostream &operator<<(std::ostream &out, const vec3f &v) {
+std::ostream &operator<<(std::ostream &out, const vec3f &v) {
   return out << "[" << v.x << ", " << v.y << ", " << v.z << "]";
 }
 

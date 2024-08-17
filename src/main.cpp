@@ -21,11 +21,13 @@ bool stepping = false;
 
 int main(int, char**) {
 
-  Phy.SMOOTHING_RADIUS = 5.f;
+  Phy.SMOOTHING_RADIUS = 10.f;
   Phy.KERNEL_NORMALIZATION = 4.f/(M_PI * powf(Phy.SMOOTHING_RADIUS, 4));
-  Phy.GAS_CONSTANT = 30000.f;
-  Phy.REST_DENSITY = 1000.f / (300.f * 500.f);
-  Phy.VISCOSITY_CONSTANT = 175.f;
+  Phy.GAS_CONSTANT = 10000.f;
+  Phy.REST_DENSITY = 500.f / (300.f * 500.f);
+  Phy.VISCOSITY_CONSTANT = 125.f;
+  Phy.SURFACE_TENSION_CONSTANT = 1000.f;
+  Phy.SURFACE_TENSION_THRESHOLD = 4000.f;
 
   fluid.setBoundaries(
     WHEIGHT/2.f - WBORDER, 
@@ -181,5 +183,9 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
   }
   if (key == GLFW_KEY_P && action == GLFW_PRESS) paused = !paused;
   if (key == GLFW_KEY_S && action == GLFW_PRESS) stepping = true;
+  if (key == GLFW_KEY_G && action == GLFW_PRESS) {
+    Phy.GRAVITY.y = (Phy.GRAVITY.y < 0.f)?0.f:-100.f;
+    std::cout << "Changed gravity to " << Phy.GRAVITY << std::endl;
+  }
     
 }

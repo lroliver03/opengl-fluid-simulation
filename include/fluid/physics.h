@@ -18,14 +18,14 @@ typedef struct vec3f {
   vec3f& operator/=(const float &v);
   vec3f operator-() const;
 
-  inline float length() const;
+  float length() const;
   inline vec3f dir() const;
 } vec3f;
 
 inline float dot(const vec3f &v1, const vec3f &v2);
 inline vec3f cross(const vec3f &v1, const vec3f &v2);
 
-inline std::ostream & operator<<(std::ostream &out, const vec3f &v);
+std::ostream &operator<<(std::ostream &out, const vec3f &v);
 
 struct gridpos_t {
   int x, y;
@@ -45,6 +45,8 @@ class Physics {
     float GAS_CONSTANT;
     float REST_DENSITY;
     float VISCOSITY_CONSTANT;
+    float SURFACE_TENSION_CONSTANT;
+    float SURFACE_TENSION_THRESHOLD;
 
     vec3f GRAVITY;
 
@@ -61,5 +63,5 @@ class Physics {
     vec3f getRandomDirection();
 };
 
-extern const vec3f RIGHT, LEFT, UP, DOWN, FRONT, BACK; // Unit base vectors.
+extern const vec3f RIGHT, LEFT, UP, DOWN, FRONT, BACK, ZEROVEC; // Unit base vectors.
 extern Physics Phy;

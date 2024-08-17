@@ -35,12 +35,12 @@ void Fluid::initParticles(const unsigned int &particle_count) {
   count = particle_count;
   particles = new particle_t[count];
   int temp_counter = 0;
-  for (int i = 0; i < 100; i++) {
+  for (int i = 0; i < 60; i++) {
     for (int j = 0; j < 50; j++) {
       particles[temp_counter] = {
         .position = {
-          .x = SETTOINTERVAL(j, 50.f, 0.f, this->container.right/4.f, this->container.left/4.f),
-          .y = SETTOINTERVAL(i, 50.f, 0.f, this->container.top/4.f, this->container.bottom/4.f),
+          .x = SETTOINTERVAL(j, 50.f, 0.f, this->container.right/3.f, this->container.left/3.f),
+          .y = SETTOINTERVAL(i, 60.f, 0.f, this->container.top/3.f, this->container.bottom/3.f),
           .z = 0.f // SETTOINTERVAL(i, 20.f, 0.f, .3f, -.3f)
         },
         .velocity = {
@@ -144,6 +144,9 @@ inline void Fluid::updateAllPressures() {
 inline void Fluid::updateVelocity(const unsigned &particle, const float &timestep) {
   vec3f pressure_force = {.0f, .0f, .0f};
   vec3f viscosity_force = {.0f, .0f, .0f};
+  vec3f surface_tension = {.0f, .0f, .0f};
+
+  float surface_tension_factor = 0.f; // Accumulate smooth color field laplacian.
 
   const int x_lower_limit = std::max(this->particles[particle].grid_position.x - 1, 0);
   const int x_upper_limit = std::min(this->particles[particle].grid_position.x + 1, this->grid.width - 1);
@@ -153,28 +156,38 @@ inline void Fluid::updateVelocity(const unsigned &particle, const float &timeste
   for (int i = x_lower_limit; i <= x_upper_limit; ++i) {
     for (int j = y_lower_limit; j <= y_upper_limit; ++j) {
       for (auto &neighbor : this->grid.vec.at(this->grid.getIndex(i, j))) {
+        // Compute kernel gradient and laplacian, divided by neighbor's density.
+        vec3f grad = Phy.gradSpikyKernel(
+          this->particles[particle].position - this->particles[neighbor].position
+        ) / this->density[neighbor];
+        float lapl = Phy.laplSpikyKernel(
+          this->particles[particle].position - this->particles[neighbor].position
+        ) / this->density[neighbor];
+        
         // Compute pressure forces.
         pressure_force += (
-          Phy.gradSpikyKernel(this->particles[particle].position - this->particles[neighbor].position) 
-          * -(this->pressure[particle] + this->pressure[neighbor])/(2.f * this->density[neighbor])
+          grad * -(this->pressure[particle] + this->pressure[neighbor])/2.f
         ); // Symmetric pressure force, equation 10 of [1].
 
         // Compute viscosity forces.
         viscosity_force += (
-          (this->particles[neighbor].velocity - this->particles[particle].velocity)
-          *
-          (Phy.laplSpikyKernel(
-              this->particles[particle].position - this->particles[neighbor].position
-            ) / this->density[neighbor])
+          (this->particles[neighbor].velocity - this->particles[particle].velocity) * lapl
         );
-        // std::cout << "Evaluated " << neighbor << "th particle against " << particle << "th particle.\n";
+
+        surface_tension += grad;
+        surface_tension_factor += lapl;
       }
     }
   }
 
   viscosity_force *= Phy.VISCOSITY_CONSTANT;
 
-  vec3f dv = (pressure_force + viscosity_force + Phy.GRAVITY) * timestep;
+  surface_tension_factor *= Phy.SURFACE_TENSION_CONSTANT;
+  surface_tension = surface_tension.dir() * surface_tension_factor;
+  if (surface_tension.length() < Phy.SURFACE_TENSION_THRESHOLD)
+    surface_tension = ZEROVEC;
+
+  vec3f dv = (pressure_force + viscosity_force + surface_tension + Phy.GRAVITY) * timestep;
 
   this->accelerate(particle, dv);
 }

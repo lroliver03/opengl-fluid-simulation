@@ -8,8 +8,8 @@
 
 #define EPSILON .1f
 
-const unsigned int particles = 5000;
-const float radius = 2.f;
+const unsigned int particles = 3000;
+const float radius = 3.f;
 const float FRAMERATE = 60.f;
 const float TIMESCALE = 1.f;
 const float TIMESTEP = TIMESCALE/FRAMERATE;
