@@ -8,17 +8,17 @@
 #include <iostream>
 
 class BaseShader {
-    protected:
-        bool created;
+  protected:
+    bool created;
 
-    public:
-        GLuint program;
-        void createProgram();
-        bool isCreated() const;
-        bool linkProgram();
-        void deleteProgram() const;
-        
-        void use() const;
-        
-        // Removed.
+  public:
+    GLuint program;
+    void createProgram();
+    bool isCreated() const;
+    bool linkProgram();
+    void deleteProgram() const;
+    
+    void use() const;
+    
+    // Removed.
 };

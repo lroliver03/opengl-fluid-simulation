@@ -18,134 +18,148 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 
 bool paused = true;
 bool stepping = false;
-bool log_all = false;
 
 int main(int, char**) {
 
-    fluid.initParticles(particles);
-    fluid.setBoundaries(WHEIGHT/2.f - WBORDER, WBORDER - WHEIGHT/2.f, WBORDER - WWIDTH/2.f, WWIDTH/2.f - WBORDER);
+  Phy.SMOOTHING_RADIUS = 10.f;
+  Phy.KERNEL_NORMALIZATION = 4.f/(M_PI * powf(Phy.SMOOTHING_RADIUS, 4));
+  Phy.GAS_CONSTANT = 10000.f;
+  Phy.REST_DENSITY = 500.f / (300.f * 500.f);
+  Phy.VISCOSITY_CONSTANT = 125.f;
+  Phy.SURFACE_TENSION_CONSTANT = 1000.f;
+  Phy.SURFACE_TENSION_THRESHOLD = 4000.f;
 
-    Phy.IDEAL_DENSITY = 18.f;
-    Phy.SMOOTHING_RADIUS = 100.f;
-    Phy.PRESSURE_MULTIPLIER = 10000.f;
+  fluid.setBoundaries(
+    WHEIGHT/2.f - WBORDER, 
+    WBORDER - WHEIGHT/2.f, 
+    WBORDER - WWIDTH/2.f, 
+    WWIDTH/2.f - WBORDER
+  );
+  fluid.initParticles(particles);
+  fluid.init();
+  fluid.updateGrid();
 
-    if (!glfwInit()) {
-        return -1;
-    }
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+  Phy.GRAVITY.x = 0.f;
+  Phy.GRAVITY.y = -100.f;
+  Phy.GRAVITY.z = 0.f;
 
-    #ifdef __APPLE__
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    #endif
+  if (!glfwInit()) {
+    return -1;
+  }
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow* window = glfwCreateWindow(WWIDTH, WHEIGHT, "OpenGL Fluid Simulation", NULL, NULL);
-    if (window == NULL) {
-        printf("Failed to create window!\n");
-        glfwTerminate();
-        return -1;
-    }
-    glfwMakeContextCurrent(window);
-    glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
-    glfwSetKeyCallback(window, keyCallback);
-    glfwSetWindowAttrib(window, GLFW_RESIZABLE, GLFW_FALSE);
+  #ifdef __APPLE__
+  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+  #endif
 
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        printf("Couldn't open GLAD!\n");
-        glfwTerminate();
-        return -1;
-    }
+  GLFWwindow* window = glfwCreateWindow(2*WWIDTH, 2*WHEIGHT, "OpenGL Fluid Simulation", NULL, NULL);
+  if (window == NULL) {
+    printf("Failed to create window!\n");
+    glfwTerminate();
+    return -1;
+  }
+  glfwMakeContextCurrent(window);
+  glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
+  glfwSetKeyCallback(window, keyCallback);
+  glfwSetWindowAttrib(window, GLFW_RESIZABLE, GLFW_FALSE);
 
-    Shader render_shader;
-    render_shader.createProgram();
-    render_shader.loadFile(Shader::VERTEX_SHADER, "assets/shaders/particle/vertex.vert");
-    render_shader.loadFile(Shader::FRAGMENT_SHADER, "assets/shaders/particle/fragment.frag");
-    render_shader.attach(Shader::VERTEX_SHADER);
-    render_shader.attach(Shader::FRAGMENT_SHADER);
-    render_shader.linkProgram();
-    render_shader.deleteShader(Shader::VERTEX_SHADER);
-    render_shader.deleteShader(Shader::FRAGMENT_SHADER);
+  if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+    printf("Couldn't open GLAD!\n");
+    glfwTerminate();
+    return -1;
+  }
 
-    shaderbuffer_t buffers;
+  Shader render_shader;
+  render_shader.createProgram();
+  render_shader.loadFile(Shader::VERTEX_SHADER, "assets/shaders/particle/vertex.vert");
+  render_shader.loadFile(Shader::FRAGMENT_SHADER, "assets/shaders/particle/fragment.frag");
+  render_shader.attach(Shader::VERTEX_SHADER);
+  render_shader.attach(Shader::FRAGMENT_SHADER);
+  render_shader.linkProgram();
+  render_shader.deleteShader(Shader::VERTEX_SHADER);
+  render_shader.deleteShader(Shader::FRAGMENT_SHADER);
 
-    glGenVertexArrays(1, &buffers.VAO);
-    glGenBuffers(1, &buffers.VBO);
-    // glGenBuffers(1, &EBO);
-    glBindVertexArray(buffers.VAO);
+  shaderbuffer_t buffers;
+
+  glGenVertexArrays(1, &buffers.VAO);
+  glGenBuffers(1, &buffers.VBO);
+  // glGenBuffers(1, &EBO);
+  glBindVertexArray(buffers.VAO);
+
+  glBindBuffer(GL_ARRAY_BUFFER, buffers.VBO);
+  glBufferData(GL_ARRAY_BUFFER, particles * sizeof(particle_t), fluid.particles, GL_DYNAMIC_DRAW);
+
+  // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+  // glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * (steps-2) * particles * sizeof(float), indices, GL_DYNAMIC_DRAW);
+
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(particle_t), (void*)(offsetof(particle_t, position)));
+  glEnableVertexAttribArray(0);
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(particle_t), (void*)(offsetof(particle_t, velocity)));
+  glEnableVertexAttribArray(1);
+
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+  glBindVertexArray(0);
+
+  float model_matrix[] = {
+    2.f/WWIDTH, 0.f, 0.f, 0.f,
+    0.f, 2.f/WHEIGHT, 0.f, 0.f,
+    0.f, 0.f, 1.f, 0.f,
+    0.f, 0.f, 0.f, 1.f
+  };
+  float view_matrix[] = {
+    1.f, 0.f, 0.f, 0.f,
+    0.f, 1.f, 0.f, 0.f,
+    0.f, 0.f, 1.f, 0.f,
+    0.f, 0.f, 0.f, 1.f
+  };
+  float projection_matrix[] = {
+    1.f, 0.f, 0.f, 0.f,
+    0.f, 1.f, 0.f, 0.f,
+    0.f, 0.f, 1.f, 0.f,
+    0.f, 0.f, 0.f, 1.f
+  };
+
+  glPointSize(radius);
+
+  // glfwSetTime(0.0); // glfwGetTime returns time since simulation start.
+  while (!glfwWindowShouldClose(window)) {
+    double time = glfwGetTime();
+
+    glfwPollEvents();
+
+    glClearColor(0.f, 0.f, 0.f, 1.f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    // Loop over all particles.
+    if (!paused || stepping)
+      fluid.update(TIMESTEP);
+    
+    if (stepping)
+      stepping = false;
 
     glBindBuffer(GL_ARRAY_BUFFER, buffers.VBO);
-    glBufferData(GL_ARRAY_BUFFER, particles * sizeof(particle_t), fluid.particles, GL_DYNAMIC_DRAW);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, particles * sizeof(particle_t), fluid.particles);
+    
+    // Set model, view and projecion matrices.
+    glUniformMatrix4fv(glGetUniformLocation(render_shader.program, "model"), 1, GL_FALSE, model_matrix);
+    glUniformMatrix4fv(glGetUniformLocation(render_shader.program, "view"), 1, GL_FALSE, view_matrix);
+    glUniformMatrix4fv(glGetUniformLocation(render_shader.program, "projection"), 1, GL_FALSE, projection_matrix);
+    
+    render_shader.use();
+    glBindVertexArray(buffers.VAO);
+    glDrawArrays(GL_POINTS, 0, particles);
 
-    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    // glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * (steps-2) * particles * sizeof(float), indices, GL_DYNAMIC_DRAW);
+    glfwSwapBuffers(window);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(particle_t), (void*)(offsetof(particle_t, position)));
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(particle_t), (void*)(offsetof(particle_t, velocity)));
-    glEnableVertexAttribArray(1);
+    while (glfwGetTime() - time < TIMESTEP); // Enforcing framerate when too fast.
+    sprintf(wtitle, "[%f] OpenGL Fluid Simulation", (1/(glfwGetTime() - time)));
+    glfwSetWindowTitle(window, wtitle); // Framerate now visible on window title!
+  }
 
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    glBindVertexArray(0);
-
-    float model_matrix[] = {
-        2.f/WWIDTH, 0.f, 0.f, 0.f,
-        0.f, 2.f/WHEIGHT, 0.f, 0.f,
-        0.f, 0.f, 1.f, 0.f,
-        0.f, 0.f, 0.f, 1.f
-    };
-    float view_matrix[] = {
-        1.f, 0.f, 0.f, 0.f,
-        0.f, 1.f, 0.f, 0.f,
-        0.f, 0.f, 1.f, 0.f,
-        0.f, 0.f, 0.f, 1.f
-    };
-    float projection_matrix[] = {
-        1.f, 0.f, 0.f, 0.f,
-        0.f, 1.f, 0.f, 0.f,
-        0.f, 0.f, 1.f, 0.f,
-        0.f, 0.f, 0.f, 1.f
-    };
-
-    glPointSize(radius);
-
-    // glfwSetTime(0.0); // glfwGetTime returns time since simulation start.
-    while (!glfwWindowShouldClose(window)) {
-        double time = glfwGetTime();
-
-        glfwPollEvents();
-
-        glClearColor(0.f, 0.f, 0.f, 1.f);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        // Loop over all particles.
-        if (!paused || stepping)
-            fluid.update(TIMESTEP, stepping || log_all);
-        
-        if (stepping)
-            stepping = false;
-
-        glBindBuffer(GL_ARRAY_BUFFER, buffers.VBO);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, particles * sizeof(particle_t), fluid.particles);
-        
-        // Set model, view and projecion matrices.
-        glUniformMatrix4fv(glGetUniformLocation(render_shader.program, "model"), 1, GL_FALSE, model_matrix);
-        glUniformMatrix4fv(glGetUniformLocation(render_shader.program, "view"), 1, GL_FALSE, view_matrix);
-        glUniformMatrix4fv(glGetUniformLocation(render_shader.program, "projection"), 1, GL_FALSE, projection_matrix);
-        
-        render_shader.use();
-        glBindVertexArray(buffers.VAO);
-        glDrawArrays(GL_POINTS, 0, particles);
-
-        glfwSwapBuffers(window);
-
-        while (glfwGetTime() - time < TIMESTEP); // Enforcing framerate when too fast.
-        sprintf(wtitle, "[%f] OpenGL Fluid Simulation", (1/(glfwGetTime() - time)));
-        glfwSetWindowTitle(window, wtitle); // Framerate now visible on window title!
-    }
-
-    glDeleteVertexArrays(1, &buffers.VAO);
+  glDeleteVertexArrays(1, &buffers.VAO);
     glDeleteBuffers(1, &buffers.VBO);
     glDeleteBuffers(1, &buffers.EBO);
     render_shader.deleteProgram();
@@ -155,20 +169,23 @@ int main(int, char**) {
 }
 
 void windowSizeCallback(GLFWwindow* window, int width, int height) {
-    glfwSetWindowSize(window, width, height);
+  glfwSetWindowSize(window, width, height);
 }
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
-    glViewport(0, 0, width, height);
+  glViewport(0, 0, width, height);
 }
 
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
-        glfwSetWindowShouldClose(window, true);
-        return;
-    }
-    if (key == GLFW_KEY_P && action == GLFW_PRESS) paused = !paused;
-    if (key == GLFW_KEY_S && action == GLFW_PRESS) stepping = true;
-    if (key == GLFW_KEY_L && action == GLFW_PRESS) log_all = !log_all;
+  if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
+    glfwSetWindowShouldClose(window, true);
+    return;
+  }
+  if (key == GLFW_KEY_P && action == GLFW_PRESS) paused = !paused;
+  if (key == GLFW_KEY_S && action == GLFW_PRESS) stepping = true;
+  if (key == GLFW_KEY_G && action == GLFW_PRESS) {
+    Phy.GRAVITY.y = (Phy.GRAVITY.y < 0.f)?0.f:-100.f;
+    std::cout << "Changed gravity to " << Phy.GRAVITY << std::endl;
+  }
     
 }

@@ -2,56 +2,66 @@
 
 #include <random>
 #include <cmath>
+#include <iostream>
 
 typedef struct vec3f {
-    float x, y, z;
+  float x, y, z;
 
-    vec3f operator+(const vec3f &v) const;
-    vec3f operator-(const vec3f &v) const;
-    vec3f operator*(const float &v) const;
-    vec3f operator/(const float &v) const;
-    vec3f& operator=(const vec3f &v);
-    vec3f& operator+=(const vec3f &v);
-    vec3f& operator-=(const vec3f &v);
-    vec3f& operator*=(const float &v);
-    vec3f& operator/=(const float &v);
-    vec3f operator-() const;
+  vec3f operator+(const vec3f &v) const;
+  vec3f operator-(const vec3f &v) const;
+  vec3f operator*(const float &v) const;
+  vec3f operator/(const float &v) const;
+  vec3f& operator=(const vec3f &v);
+  vec3f& operator+=(const vec3f &v);
+  vec3f& operator-=(const vec3f &v);
+  vec3f& operator*=(const float &v);
+  vec3f& operator/=(const float &v);
+  vec3f operator-() const;
 
-    float length() const;
-    vec3f dir() const;
+  float length() const;
+  inline vec3f dir() const;
 } vec3f;
 
-float dot(const vec3f &v1, const vec3f &v2);
-vec3f cross(const vec3f &v1, const vec3f &v2);
+inline float dot(const vec3f &v1, const vec3f &v2);
+inline vec3f cross(const vec3f &v1, const vec3f &v2);
+
+std::ostream &operator<<(std::ostream &out, const vec3f &v);
+
+struct gridpos_t {
+  int x, y;
+};
 
 typedef struct particle_t {
-    vec3f position;
-    vec3f next_position;
-    vec3f velocity;
+  vec3f position;
+  vec3f velocity;
+  struct gridpos_t grid_position;
 } particle_t;
 
 class Physics {
-    public:
-        float SMOOTHING_RADIUS;
-        float NEAR_SMOOTHING_RADIUS;
-        float PRESSURE_MULTIPLIER;
-        float NEAR_PRESSURE_MULTIPLIER;
-        float IDEAL_DENSITY;
-        float COLLISION_DAMPENER;
-        float VISCOSITY_LINEAR_COEF;
-        float VISCOSITY_QUADRATIC_COEF;
+  public:
 
-        float fractionSub(const float &length, const float &radius) const;
-        float squaredFractionSub(const float &length, const float &radius) const;
-        float cubedFractionSub(const float &length, const float &radius) const;
+    float SMOOTHING_RADIUS;
+    float KERNEL_NORMALIZATION;
+    float GAS_CONSTANT;
+    float REST_DENSITY;
+    float VISCOSITY_CONSTANT;
+    float SURFACE_TENSION_CONSTANT;
+    float SURFACE_TENSION_THRESHOLD;
 
-        float squaredFractionSubGrad(const float &length, const float &radius) const;
-        float cubedFractionSubGrad(const float &length, const float &radius) const;
+    vec3f GRAVITY;
 
-        float getPressure(const float &density, const float &ideal_density, const float &multiplier) const;
+    // Kernel functions used for generic property calculations.
+    /* spikyKernel takes vector and computes kernel from its length. */
+    float spikyKernel(const vec3f &r) const;
+    /* gradSpikyKernel takes vector and computes kernel gradient vector from it. */
+    vec3f gradSpikyKernel(const vec3f &r) const;
+    /* laplSpikyKernel takes vector and computes kernel Laplacian from its length. */
+    float laplSpikyKernel(const vec3f &r) const;
 
-        vec3f getRandomDirection();
+    float getPressure(const float &density);
+
+    vec3f getRandomDirection();
 };
 
-extern const vec3f RIGHT, LEFT, UP, DOWN, FRONT, BACK; // Unit base vectors.
+extern const vec3f RIGHT, LEFT, UP, DOWN, FRONT, BACK, ZEROVEC; // Unit base vectors.
 extern Physics Phy;
